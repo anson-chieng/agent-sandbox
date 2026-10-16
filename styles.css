@@ -65,6 +65,39 @@ main {
   padding: 1rem;
   border-top: 1px solid var(--color-border);
   text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.site-footer > :first-child {
+  flex: 1 1 auto;
+}
+
+.back-to-top {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  min-width: 24px;
+  margin-inline-start: auto;
+}
+
+@media (max-width: 30rem) {
+  .back-to-top {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+}
+
+#top:focus:not(:focus-visible) {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 .muted {
