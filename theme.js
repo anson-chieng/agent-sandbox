@@ -42,10 +42,12 @@ export function otherTheme(theme) {
   return theme === 'dark' ? 'light' : 'dark';
 }
 
-/** Applies the theme to <html> and, if given, syncs the toggle button. */
-export function applyTheme(theme, root, button) {
+/** Applies the theme to <html> and, if given, syncs the toggle button and the label text
+ * (taken from the label's `data-label-dark` / `data-label-light` attribute). */
+export function applyTheme(theme, root, button, label) {
   root.setAttribute('data-theme', theme);
   root.style.setProperty('color-scheme', theme);
+  if (label) label.textContent = label.getAttribute(`data-label-${theme}`);
   if (button) {
     const next = otherTheme(theme);
     button.setAttribute('aria-pressed', String(theme === 'dark'));
@@ -68,23 +70,24 @@ function getDefaultStorage() {
  */
 export function initThemeToggle({
   button,
+  label = null,
   root = document.documentElement,
   storage = getDefaultStorage(),
   matchMedia = window.matchMedia.bind(window),
 }) {
   let theme = resolveInitialTheme(storage, matchMedia);
-  applyTheme(theme, root, button);
+  applyTheme(theme, root, button, label);
 
   const toggle = () => {
     theme = otherTheme(theme);
     writeStoredTheme(storage, theme);
-    applyTheme(theme, root, button);
+    applyTheme(theme, root, button, label);
   };
 
   const onSystemChange = () => {
     if (readStoredTheme(storage) !== null) return;
     theme = getSystemTheme(matchMedia);
-    applyTheme(theme, root, button);
+    applyTheme(theme, root, button, label);
   };
 
   let mql = null;
@@ -108,5 +111,5 @@ export function initThemeToggle({
 
 if (typeof document !== 'undefined') {
   const button = document.getElementById('theme-toggle');
-  if (button) initThemeToggle({ button });
+  if (button) initThemeToggle({ button, label: document.getElementById('theme-label') });
 }
