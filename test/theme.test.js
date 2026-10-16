@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyTheme,
   initThemeToggle,
@@ -140,11 +140,37 @@ describe('OS preference changes', () => {
     expect(root.getAttribute('data-theme')).toBe('light');
   });
 
-  it('do not override a click whose write failed', () => {
-    const mm = makeMatchMedia(false);
+  it('still apply after a click whose write failed (nothing is stored)', () => {
+    const mm = makeMatchMedia(true);
     init(throwingStorage(['write']), mm);
     button.click();
+    expect(root.getAttribute('data-theme')).toBe('light');
     mm.setDark(false);
+    expect(root.getAttribute('data-theme')).toBe('light');
+    mm.setDark(true);
     expect(root.getAttribute('data-theme')).toBe('dark');
+  });
+});
+
+describe('default storage access', () => {
+  it('does not abort init when the localStorage getter throws', () => {
+    const spy = vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError');
+    });
+    const mm = makeMatchMedia(true);
+    try {
+      let controller;
+      expect(() => {
+        controller = initThemeToggle({ button, root, matchMedia: mm });
+      }).not.toThrow();
+      expect(root.getAttribute('data-theme')).toBe('dark');
+      button.click();
+      expect(root.getAttribute('data-theme')).toBe('light');
+      mm.setDark(true);
+      expect(root.getAttribute('data-theme')).toBe('dark');
+      controller.destroy();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

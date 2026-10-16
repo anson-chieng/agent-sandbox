@@ -53,6 +53,15 @@ export function applyTheme(theme, root, button) {
   }
 }
 
+/** Returns window.localStorage, or null if accessing it throws (e.g. SecurityError). */
+function getDefaultStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Wires the toggle button and OS-preference listener.
  * Returns the controller (`getTheme`, `toggle`, `destroy`).
@@ -60,23 +69,20 @@ export function applyTheme(theme, root, button) {
 export function initThemeToggle({
   button,
   root = document.documentElement,
-  storage = window.localStorage,
+  storage = getDefaultStorage(),
   matchMedia = window.matchMedia.bind(window),
 }) {
   let theme = resolveInitialTheme(storage, matchMedia);
-  // Remembers a click even if the write failed, so OS changes don't override it.
-  let chosenThisSession = false;
   applyTheme(theme, root, button);
 
   const toggle = () => {
     theme = otherTheme(theme);
-    chosenThisSession = true;
     writeStoredTheme(storage, theme);
     applyTheme(theme, root, button);
   };
 
   const onSystemChange = () => {
-    if (chosenThisSession || readStoredTheme(storage) !== null) return;
+    if (readStoredTheme(storage) !== null) return;
     theme = getSystemTheme(matchMedia);
     applyTheme(theme, root, button);
   };
