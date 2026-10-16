@@ -80,3 +80,22 @@ it('built page has no date-computing script', () => {
   const html = readFileSync(join(root, 'dist/index.html'), 'utf8');
   expect(html).not.toMatch(/lastModified/);
 });
+
+it.each([
+  ['a second span with extra classes', (h, s) => h.replace(s, s + s.replace('"last-updated"', '"last-updated extra"'))],
+  ['only a data-class attribute', (h, s) => h.replace(s, s.replace('class=', 'data-class='))],
+  ['a commented-out placeholder', (h, s) => h.replace(s, `<!-- ${s} -->`)],
+])('fails with %s', (_, edit) => {
+  const span = '<span class="last-updated" hidden>Last updated <time datetime=""></time></span>';
+  const p = join(root, 'index.html');
+  writeFileSync(p, edit(readFileSync(p, 'utf8'), span));
+  expect(build('1792152000').status).not.toBe(0);
+});
+
+it('stamps a placeholder that has extra classes', () => {
+  const span = '<span class="last-updated" hidden>Last updated <time datetime=""></time></span>';
+  const p = join(root, 'index.html');
+  writeFileSync(p, readFileSync(p, 'utf8').replace(span, span.replace('"last-updated"', '"x last-updated"')));
+  expect(build('1792152000').status).toBe(0);
+  expect(built().querySelector('time').getAttribute('datetime')).toBe('2026-10-16');
+});

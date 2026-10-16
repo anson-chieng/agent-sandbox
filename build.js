@@ -15,17 +15,33 @@ function buildDate() {
   return date;
 }
 
-function stamp(html, date) {
-  const re = /<span\b[^>]*\bclass="last-updated"[^>]*>[\s\S]*?<\/span>/g;
-  const matches = html.match(re) ?? [];
-  if (matches.length !== 1) {
-    throw new Error(`Expected exactly one span.last-updated in index.html, found ${matches.length}`);
+function findPlaceholders(html) {
+  // Blank out comments (keeping offsets) so commented-out markup is ignored.
+  const masked = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
+  const found = [];
+  for (const m of masked.matchAll(/<span\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi)) {
+    const cls = m[1].match(/(?:^|\s)class\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
+    const tokens = (cls ? (cls[1] ?? cls[2] ?? cls[3]) : '').split(/\s+/);
+    if (!tokens.includes('last-updated')) continue;
+    const end = masked.indexOf('</span>', m.index);
+    if (end !== -1) found.push([m.index, end + '</span>'.length]);
+    else found.push(null);
   }
+  return found;
+}
+
+function stamp(html, date) {
+  const found = findPlaceholders(html);
+  if (found.length !== 1 || !found[0]) {
+    throw new Error(`Expected exactly one span.last-updated in index.html, found ${found.length}`);
+  }
+  const [start, end] = found[0];
   const text = new Intl.DateTimeFormat('en-GB', { dateStyle: 'long', timeZone: 'UTC' }).format(date);
   const iso = date.toISOString().slice(0, 10);
-  return html.replace(
-    re,
-    `<span class="last-updated">Last updated <time datetime="${iso}">${text}</time></span>`,
+  return (
+    html.slice(0, start) +
+    `<span class="last-updated">Last updated <time datetime="${iso}">${text}</time></span>` +
+    html.slice(end)
   );
 }
 
