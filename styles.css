@@ -177,3 +177,19 @@ input[type='text'] {
     animation: none !important;
   }
 }
+
+/* Label names the active theme; pure CSS so it is right from first paint. */
+.theme-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.theme-label-dark,
+:root[data-theme='dark'] .theme-label-light {
+  display: none;
+}
+
+:root[data-theme='dark'] .theme-label-dark {
+  display: inline;
+}
