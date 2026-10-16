@@ -61,6 +61,12 @@ main {
   padding: 1.5rem 1rem;
 }
 
+.site-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--color-border);
+  text-align: center;
+}
+
 .muted {
   color: var(--color-text-muted);
 }
