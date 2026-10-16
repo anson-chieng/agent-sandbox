@@ -84,6 +84,9 @@ it('built page has no date-computing script', () => {
 it.each([
   ['a second span with extra classes', (h, s) => h.replace(s, s + s.replace('"last-updated"', '"last-updated extra"'))],
   ['only a data-class attribute', (h, s) => h.replace(s, s.replace('class=', 'data-class='))],
+  ['a quoted attribute value that looks like a class', (h, s) => h.replace(s, `<span title=" class='last-updated'" hidden>Other</span>`)],
+  ['a second span hiding its class after a quoted look-alike', (h, s) => h.replace(s, s + `<span title=" class='other'" class="last-updated"></span>`)],
+  ['an unclosed placeholder', (h, s) => h.replace(s, '<span class="last-updated" hidden>')],
   ['a commented-out placeholder', (h, s) => h.replace(s, `<!-- ${s} -->`)],
 ])('fails with %s', (_, edit) => {
   const span = '<span class="last-updated" hidden>Last updated <time datetime=""></time></span>';

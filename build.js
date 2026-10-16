@@ -15,18 +15,35 @@ function buildDate() {
   return date;
 }
 
+function classTokens(attrs) {
+  // Walk attributes in order so quoted values can't be mistaken for attribute names.
+  const re = /[\s/]*([^\s"'=<>/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/y;
+  let m;
+  while ((m = re.exec(attrs)) && m[0] !== '') {
+    if (m[1].toLowerCase() === 'class') return (m[2] ?? m[3] ?? m[4] ?? '').split(/\s+/);
+  }
+  return [];
+}
+
 function findPlaceholders(html) {
   // Blank out comments (keeping offsets) so commented-out markup is ignored.
   const masked = html.replace(/<!--[\s\S]*?-->/g, (c) => ' '.repeat(c.length));
+  const tags = [...masked.matchAll(/<span\b((?:"[^"]*"|'[^']*'|[^>"'])*)>|<\/span\s*>/gi)];
   const found = [];
-  for (const m of masked.matchAll(/<span\b((?:"[^"]*"|'[^']*'|[^>"'])*)>/gi)) {
-    const cls = m[1].match(/(?:^|\s)class\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/i);
-    const tokens = (cls ? (cls[1] ?? cls[2] ?? cls[3]) : '').split(/\s+/);
-    if (!tokens.includes('last-updated')) continue;
-    const end = masked.indexOf('</span>', m.index);
-    if (end !== -1) found.push([m.index, end + '</span>'.length]);
-    else found.push(null);
-  }
+  tags.forEach((t, i) => {
+    if (!t[0].startsWith('<span') || !classTokens(t[1]).includes('last-updated')) return;
+    // Match the closing tag by nesting depth, not the first </span>.
+    let depth = 1;
+    let end = null;
+    for (const n of tags.slice(i + 1)) {
+      depth += n[0].startsWith('<span') ? 1 : -1;
+      if (depth === 0) {
+        end = n.index + n[0].length;
+        break;
+      }
+    }
+    found.push(end === null ? null : [t.index, end]);
+  });
   return found;
 }
 
