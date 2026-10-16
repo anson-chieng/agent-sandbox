@@ -17,7 +17,20 @@ it.each([2025, 2031])('shows © %i in the page footer using the current date', a
   await import('../footer.js');
 
   const footer = document.querySelector('body > footer');
-  expect(footer.textContent).toBe(`© ${year}`);
+  expect(footer.firstElementChild.textContent).toBe(`© ${year}`);
   expect(getComputedStyle(footer).display).not.toBe('none');
   expect(footer.hidden).toBe(false);
+});
+
+it('ends the footer with a Back to top anchor targeting the header', () => {
+  const page = new DOMParser().parseFromString(html, 'text/html');
+  const footer = page.querySelector('footer.site-footer');
+  const link = footer.lastElementChild;
+  expect(link.getAttribute('href')).toBe('#top');
+  expect(link.textContent).toBe('Back to top ↑');
+  expect(link.querySelector('span').getAttribute('aria-hidden')).toBe('true');
+  expect(link.hasAttribute('aria-label')).toBe(false);
+  const header = page.querySelector('header.site-header');
+  expect(header.id).toBe('top');
+  expect(header.getAttribute('tabindex')).toBe('-1');
 });
